@@ -1,0 +1,18 @@
+{
+    "name": "NomDuJeu.Editor",
+    "rootNamespace": "NomDuJeu.Editor",
+    "references": [
+        "GUID:b9328f602c2414e48babcb9e15e87b2c"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

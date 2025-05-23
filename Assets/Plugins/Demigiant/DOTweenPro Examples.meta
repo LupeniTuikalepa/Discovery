@@ -1,0 +1,32 @@
+fileFormatVersion: 2
+guid: 0e606767f2f03204fb289d21d2696684
+<<<<<<< HEAD
+labels:
+- Tween
+- Tweening
+- Animation
+- HOTween
+- Paths
+- VisualScripting
+- VisualEditor
+- iTween
+- DFTween
+- LeanTween
+- Ease
+- Easing
+- Shake
+- Punch
+- 2DToolkit
+- TextMeshPro
+- Text
+folderAsset: yes
+DefaultImporter:
+  userData: 
+=======
+folderAsset: yes
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+>>>>>>> 6088eba68 (fin inté menu deckbuilding)
