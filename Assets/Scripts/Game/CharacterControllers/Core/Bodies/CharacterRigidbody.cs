@@ -11,7 +11,7 @@ namespace Discovery.Game.CharacterControllers
         [SerializeField]
         private CapsuleCollider capsuleCollider;
 
-        [SerializeField, Range(.001f, 1)]
+        [SerializeField, Range(.001f, .01f)]
         private float skinWidth = .1f;
         [SerializeField]
         private LayerMask collisionLayerMask;
@@ -45,14 +45,16 @@ namespace Discovery.Game.CharacterControllers
             return new TeleportationResult();
         }
 
-        public override SlideResult SlideAndCollide(Vector3 velocity, float deltaTime, bool apply = true)
+        public override SlideResult SlideAndCollide(Vector3 delta, bool apply = true)
         {
             SlideCollision[] buffer = new SlideCollision[maxBounces];
             int count = 0;
 
-            Vector3 delta = velocity * deltaTime;
             Vector3 from = GetPosition();
+            Debug.DrawRay(from, delta * 10, Color.red);
             Vector3 finalDelta = CollideAndSlide(delta, from, ref count, buffer);
+            Debug.DrawRay(from, finalDelta * 10, Color.magenta);
+
             Vector3 to = from + finalDelta;
             if (apply)
             {
@@ -66,50 +68,52 @@ namespace Discovery.Game.CharacterControllers
             {
                 from = from,
                 to = to,
-                inVelocity = velocity,
-                outVelocity = finalDelta / deltaTime,
+                inDelta = delta,
+                outDelta = finalDelta,
                 collisions = buffer,
                 collisionCount = count,
             };
         }
 
-        protected Vector3 CollideAndSlide(Vector3 vel, Vector3 from, ref int depth, SlideCollision[] collisions)
+        protected Vector3 CollideAndSlide(Vector3 delta, Vector3 from, ref int depth, SlideCollision[] collisions)
         {
             if(depth >= maxBounces)
-                return vel;
+                return delta;
 
-            Vector3 direction = vel.normalized;
-            var distance = vel.magnitude;
+            Vector3 normDirection = delta.normalized;
+            var distance = delta.magnitude;
 
-            if (Cast(from, direction, out RaycastHit hit, distance, collisionLayerMask.value))
+            if (Cast(from, normDirection, out RaycastHit hit, distance, collisionLayerMask.value))
             {
-                var distanceBeforeContact = (distance - hit.distance);
+                float distanceBeforeContact = hit.distance - skinWidth;
+                float distanceAfterContact = distance - distanceBeforeContact;
+
+                Vector3 projectedDelta = Vector3.ProjectOnPlane(normDirection, hit.normal) * distanceAfterContact;
+                Vector3 newFrom = from + normDirection * distanceBeforeContact;
+                Debug.DrawRay(newFrom, projectedDelta * 100);
+                Debug.DrawRay(from, projectedDelta * 100, Color.coral);
+
                 collisions[depth] = new SlideCollision()
                 {
                     point = hit.point,
                     normal = hit.normal,
                     collider = hit.collider,
-                    collisionPosition = from + direction * distanceBeforeContact,
-                    force = vel
+                    collisionPosition = from + normDirection * distanceBeforeContact,
+                    inVel = normDirection * distanceBeforeContact,
+                    collisionVel = normDirection * distanceAfterContact,
+                    projectedVel = projectedDelta,
                 };
                 depth++;
-
-                float hitDistance = hit.distance;
-                Vector3 bounceVelocity = Vector3.ProjectOnPlane(direction, hit.normal) * distanceBeforeContact;
-
-                Debug.DrawRay(hit.point, bounceVelocity, Color.red);
-                Vector3 recursive = CollideAndSlide(bounceVelocity, from + direction * hitDistance, ref depth, collisions);
-                Debug.DrawRay(from + direction * hitDistance, bounceVelocity, Color.red);
-
-                return direction * hitDistance + recursive;
+                Vector3 recursive = CollideAndSlide(projectedDelta, newFrom, ref depth, collisions);
+                return normDirection.normalized * distanceBeforeContact + recursive;
             }
 
-            return vel;
+            return delta;
         }
 
         public override bool Cast(Vector3 from, Vector3 direction, out RaycastHit hit,  float maxDistance, int mask)
         {
-            return Physics.CapsuleCast(GetPoint1(from), GetPoint2(from), Radius, direction, out hit, maxDistance, mask);
+            return Physics.CapsuleCast(GetPoint1(from), GetPoint2(from), capsuleCollider.radius , direction, out hit, maxDistance, mask);
         }
 
         public override Vector3 GetPosition() => rb.position;
@@ -126,7 +130,6 @@ namespace Discovery.Game.CharacterControllers
         };
 
 
-        public float Radius => capsuleCollider.radius + skinWidth;
 
         protected Vector3 GetCenterPoint() => GetCenterPoint(capsuleCollider.transform.position);
         protected Vector3 GetCenterPoint(Vector3 pos) => pos + capsuleCollider.center;

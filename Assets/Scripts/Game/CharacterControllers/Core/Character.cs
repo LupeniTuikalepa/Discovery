@@ -51,7 +51,7 @@ namespace Discovery.Game.Game.CharacterControllers.Core
             MovementInfos movementInfos = ComputeMovementForCurrentState(deltaTime);
             CharacterBody.SlideResult result = Body.SlideAndCollide(movementInfos.velocity, deltaTime);
 
-            StateVelocity = result.outVelocity;
+            StateVelocity = result.outDelta / deltaTime;
         }
 
 

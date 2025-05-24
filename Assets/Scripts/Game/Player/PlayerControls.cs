@@ -7,14 +7,7 @@ namespace Discovery.Game.CharacterControllers
 {
     public class PlayerControls : MonoBehaviour, IHumanoidControls
     {
-        public Vector3 Direction
-        {
-            get
-            {
-                Vector2 vector2 = moveInputAction.action.ReadValue<Vector2>();
-                return new Vector3(vector2.x, 0, vector2.y);
-            }
-        }
+        public Vector3 Direction { get; private set; }
 
         public bool WantsToSprint => sprintInputAction.action.IsPressed();
 
@@ -27,5 +20,31 @@ namespace Discovery.Game.CharacterControllers
         [SerializeField]
         private InputActionReference jumpInputAction;
 
+        private Camera mainCamera;
+
+        private void Awake()
+        {
+            mainCamera = Camera.main;
+        }
+
+        private void Update()
+        {
+            GetInputDirection();
+        }
+
+        private void GetInputDirection()
+        {
+
+#if UNITY_EDITOR
+            if(UnityEditor.EditorApplication.isPaused)
+                return;
+#endif
+            Vector2 input = moveInputAction.action.ReadValue<Vector2>();
+
+            Vector3 forward = Vector3.ProjectOnPlane(mainCamera.transform.forward, transform.up).normalized;
+            Vector3 right = -Vector3.Cross(forward, transform.up).normalized;
+
+            Direction = forward * input.y + right * input.x;
+        }
     }
 }

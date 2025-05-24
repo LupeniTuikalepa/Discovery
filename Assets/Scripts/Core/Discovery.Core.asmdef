@@ -1,7 +1,9 @@
 {
     "name": "Discovery.Core",
     "rootNamespace": "Discovery.Core",
-    "references": [],
+    "references": [
+        "GUID:c08e6420a9402a248878197da69c4d9a"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

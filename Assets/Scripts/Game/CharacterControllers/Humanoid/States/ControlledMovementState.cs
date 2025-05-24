@@ -128,7 +128,7 @@ namespace Discovery.Game.CharacterControllers.States
                     float frames = isAcceleration ? AccelerationFrameCount : DecelerationFrameCount;
 
                     float effectiveStrength = curve.Evaluate(status.PhaseFrames / frames) * strength;
-                    Vector3 targetVelocity =  character.InputDirection.normalized * MaxSpeed;
+                    Vector3 targetVelocity =  GetInputDirection(in character, in status).normalized * MaxSpeed;
                     newVelocity = Vector3.RotateTowards(affectedVelocity,
                         targetVelocity,
                         RotationStrength * Mathf.Deg2Rad * deltaTime,
@@ -144,7 +144,6 @@ namespace Discovery.Game.CharacterControllers.States
                 status.CurrentPhase = phase;
                 status.PhaseFrames = 0;
             }
-
             return new MovementInfos()
             {
                 velocity = Axis switch
@@ -159,6 +158,9 @@ namespace Discovery.Game.CharacterControllers.States
                 gravityMultiplier = GravityMultiplier(in character, in status),
             };
         }
+
+        protected virtual Vector3 GetInputDirection(in HumanoidCharacter character, in T status) =>
+            character.InputDirection;
 
         protected virtual float GravityMultiplier(in HumanoidCharacter character, in T status) => 1f;
         protected virtual bool CanSnapToGround(in HumanoidCharacter character, in T status) => false;

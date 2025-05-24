@@ -2,13 +2,15 @@
     "name": "Discovery.Game",
     "rootNamespace": "Discovery.Game",
     "references": [
+        "GUID:c08e6420a9402a248878197da69c4d9a",
+        "GUID:6f42ce528ce4a90448281858b0f6cc42",
         "GUID:734d92eba21c94caba915361bd5ac177",
         "GUID:8819f35a0fc84499b990e90a4ca1911f",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
         "GUID:d8b63aba1907145bea998dd612889d6b",
         "GUID:2665a8d13d1b3f18800f46e256720795",
-        "GUID:63afb046c8423dd448ae7aba042ea63d",
-        "GUID:75469ad4d38634e559750d17036d5f7c"
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:63afb046c8423dd448ae7aba042ea63d"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
