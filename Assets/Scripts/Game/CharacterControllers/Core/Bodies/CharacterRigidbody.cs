@@ -6,6 +6,8 @@ namespace Discovery.Game.CharacterControllers
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterRigidbody : CharacterBody
     {
+        private static Collider[] results = new Collider[32];
+
         [SerializeField]
         private Rigidbody rb;
         [SerializeField]
@@ -17,30 +19,92 @@ namespace Discovery.Game.CharacterControllers
         private LayerMask collisionLayerMask;
         [SerializeField, Range(1, 10)]
         private int maxBounces = 5;
+        [SerializeField, Range(1, 10)]
+        private int maxDepenetrationSteps = 5;
+
 
         private void Reset()
         {
-            OnValidate();
+            CollectDependencies();
         }
 
         private void OnValidate()
         {
-            rb = GetComponent<Rigidbody>();
-            capsuleCollider = GetComponent<CapsuleCollider>();
+            CollectDependencies();
+        }
+        private void Awake()
+        {
+            OnAwake();
+            CollectDependencies();
         }
 
-        private void Awake()
+        private void FixedUpdate()
+        {
+            ComputeDepenetration();
+        }
+
+
+        protected virtual void OnAwake()
+        {
+
+        }
+
+        private void ComputeDepenetration()
+        {
+            Vector3 capsulePosition = capsuleCollider.transform.position;
+            Quaternion capsuleRotation = capsuleCollider.transform.rotation;
+
+            for (int i = 0; i < maxDepenetrationSteps; i++)
+            {
+                int count = Physics.OverlapCapsuleNonAlloc(
+                    GetPoint1(),
+                    GetPoint2(),
+                    capsuleCollider.radius + skinWidth,
+                    results,
+                    collisionLayerMask,
+                    QueryTriggerInteraction.Ignore);
+
+                for (int j = 0; j < count; j++)
+                {
+                    var other = results[j];
+                    bool hasRigidbody = other.attachedRigidbody;
+                    Vector3 otherPosition = hasRigidbody ? other.attachedRigidbody.position : other.transform.position;
+                    Quaternion otherRotation = hasRigidbody ? other.attachedRigidbody.rotation : other.transform.rotation;
+
+
+                    if (Physics.ComputePenetration(
+                            other, otherPosition, otherRotation,
+                            capsuleCollider, capsulePosition, capsuleRotation,
+                            out Vector3 direction, out float distance))
+                    {
+                        Vector3 offset = direction * distance;
+                        rb.position += offset;
+                        capsulePosition += offset;
+                    }
+                }
+            }
+        }
+
+
+        public virtual bool HasComponents() => capsuleCollider != null && rb != null;
+
+        protected virtual void CollectDependencies()
         {
             if(rb == null)
                 rb = GetComponent<Rigidbody>();
-            if(capsuleCollider == null)
-                capsuleCollider = GetComponent<CapsuleCollider>();
+
+            if (capsuleCollider == null)
+            {
+                if(!TryGetComponent(out capsuleCollider))
+                    capsuleCollider = GetComponentInChildren<CapsuleCollider>();
+            }
+
         }
 
-
-        public override TeleportationResult Teleport(Vector3 point)
+        public override TeleportationResult Teleport(Vector3 point, bool apply = true)
         {
-            rb.position = point;
+            if(apply)
+                rb.position = point;
 
             return new TeleportationResult();
         }
@@ -51,9 +115,7 @@ namespace Discovery.Game.CharacterControllers
             int count = 0;
 
             Vector3 from = GetPosition();
-            Debug.DrawRay(from, delta * 10, Color.red);
             Vector3 finalDelta = CollideAndSlide(delta, from, ref count, buffer);
-            Debug.DrawRay(from, finalDelta * 10, Color.magenta);
 
             Vector3 to = from + finalDelta;
             if (apply)
