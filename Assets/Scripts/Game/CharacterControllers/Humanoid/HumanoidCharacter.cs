@@ -1,8 +1,7 @@
-﻿using Discovery.Game.CharacterControllers.States;
-using Discovery.Game.Game.CharacterControllers.Core;
+﻿using Discovery.Game.Game.CharacterControllers.Core;
 using UnityEngine;
 
-namespace Discovery.Game.CharacterControllers
+namespace Discovery.Game.Game.CharacterControllers.Humanoid
 {
     public class HumanoidCharacter : Character<HumanoidCharacter>
     {

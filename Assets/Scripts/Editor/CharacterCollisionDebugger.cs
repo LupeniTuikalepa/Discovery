@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Discovery.Game.CharacterControllers;
+using Discovery.Game.Game.CharacterControllers.Core.Bodies;
+using Discovery.Game.Game.CharacterControllers.Core.Infos;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -32,7 +33,7 @@ namespace NomDuJeu.Editor
             if (target is CharacterBody body)
             {
                 Vector3 dir = body.transform.forward;
-                CharacterBody.SlideResult result = body.SlideAndCollide(dir, distance, false);
+                SlideResult result = body.SlideAndCollide(dir, distance, false);
 
                 Vector3[] points = new Vector3[result.collisionCount + 2];
                 points[0] = result.from;
@@ -40,7 +41,7 @@ namespace NomDuJeu.Editor
 
                 for (int i = 0; i < result.collisionCount; i++)
                 {
-                    CharacterBody.SlideCollision collision = result.collisions[i];
+                    SlideCollision collision = result.collisions[i];
                     Vector3 point = collision.collisionPosition;
                     points[i + 1] = new Vector3(point.x, result.from.y, point.z);
 
@@ -65,7 +66,7 @@ namespace NomDuJeu.Editor
 
                     for (int i = 0; i < result.collisionCount; i++)
                     {
-                        CharacterBody.SlideCollision collision = result.collisions[i];
+                        SlideCollision collision = result.collisions[i];
                         var vertices = filter.mesh.vertices;
                         for (int j = 0; j < vertices.Length; j++)
                         {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Discovery.Game.CharacterControllers
+namespace Discovery.Game.Game.CharacterControllers.Core.Infos
 {
     public struct SlideResult
     {

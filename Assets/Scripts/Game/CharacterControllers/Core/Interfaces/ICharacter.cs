@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Discovery.Game.CharacterControllers
+﻿namespace Discovery.Game.Game.CharacterControllers.Core.Interfaces
 {
     public interface ICharacter
     {

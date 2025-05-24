@@ -1,7 +1,9 @@
 ﻿using System;
+using Discovery.Game.Game.CharacterControllers.Core;
+using Discovery.Game.Game.CharacterControllers.Core.Infos;
 using UnityEngine;
 
-namespace Discovery.Game.CharacterControllers.States
+namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
 {
     public abstract class ControlledMovementState<T> : MovementState<HumanoidCharacter, T>
         where T : struct, IControlledMovementStatus

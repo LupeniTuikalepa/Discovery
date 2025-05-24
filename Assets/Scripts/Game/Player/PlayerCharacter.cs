@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Discovery.Core;
+using Discovery.Game.Game.CharacterControllers.Humanoid;
+using Discovery.Game.Game.CharacterControllers.Humanoid.States;
 using LTX.ChanneledProperties.Priorities;
-using Discovery.Core;
-using Discovery.Game.CharacterControllers.States;
 using UnityEngine;
 
-namespace Discovery.Game.CharacterControllers
+namespace Discovery.Game.Game.Player
 {
     public class PlayerCharacter : HumanoidCharacter
     {

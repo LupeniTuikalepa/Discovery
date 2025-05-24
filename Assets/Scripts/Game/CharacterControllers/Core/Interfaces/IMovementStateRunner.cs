@@ -1,4 +1,6 @@
-﻿namespace Discovery.Game.CharacterControllers.States
+﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
+
+namespace Discovery.Game.Game.CharacterControllers.Core.Interfaces
 {
     internal interface IMovementStateRunner
     {

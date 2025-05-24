@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
-using Discovery.Game.CharacterControllers;
-using Discovery.Game.CharacterControllers.States;
+using Discovery.Game.Game.CharacterControllers.Core.Bodies;
+using Discovery.Game.Game.CharacterControllers.Core.Infos;
+using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
 using UnityEngine;
 
 namespace Discovery.Game.Game.CharacterControllers.Core
@@ -49,7 +50,7 @@ namespace Discovery.Game.Game.CharacterControllers.Core
             float deltaTime = Time.fixedDeltaTime;
 
             MovementInfos movementInfos = ComputeMovementForCurrentState(deltaTime);
-            CharacterBody.SlideResult result = Body.SlideAndCollide(movementInfos.velocity, deltaTime);
+            SlideResult result = Body.SlideAndCollide(movementInfos.velocity, deltaTime);
 
             StateVelocity = result.outDelta / deltaTime;
         }

@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
+using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
 
-namespace Discovery.Game.CharacterControllers.States
+namespace Discovery.Game.Game.CharacterControllers.Core
 {
     internal sealed class MovementStateRunner<TCharacter, TStatus> : IMovementStateRunner
         where TCharacter : ICharacter

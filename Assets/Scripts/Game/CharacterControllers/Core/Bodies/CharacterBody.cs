@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-using Discovery.Game.CharacterControllers.States;
-
+using Discovery.Game.Game.CharacterControllers.Core.Infos;
 using UnityEngine;
 
-
-namespace Discovery.Game.CharacterControllers
+namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
 {
     /// <summary>
     /// Class responsible for applying movement to a characters.

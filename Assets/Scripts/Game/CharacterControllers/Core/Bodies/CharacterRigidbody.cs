@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
 using UnityEngine;
 
-namespace Discovery.Game.CharacterControllers
+namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
 {
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterRigidbody : CharacterBody
