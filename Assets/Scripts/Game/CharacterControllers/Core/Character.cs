@@ -75,14 +75,8 @@ namespace Discovery.Game.CharacterControllers
             float deltaTime = Time.fixedDeltaTime;
             HandleStates();
 
-            var movementInfos = HandleMovement(deltaTime);
+            MovementInfos movementInfos = HandleMovement(deltaTime);
             HandleGround();
-
-            if (snapToGround && IsGrounded && movementInfos.snapToGround)
-            {
-                Plane plane = new Plane(GroundNormal, GroundPoint + GroundNormal * Body.SkinWidth);
-                Body.Teleport(plane.ClosestPointOnPlane(Body.Position));
-            }
         }
 
         private void HandleStates()
@@ -227,7 +221,6 @@ namespace Discovery.Game.CharacterControllers
             return new MovementInfos()
             {
                 velocity = Vector3.zero,
-                snapToGround = false,
             };
         }
 

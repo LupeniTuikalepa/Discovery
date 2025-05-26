@@ -13,9 +13,5 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             return Vector3.ProjectOnPlane(baseDirection, character.GroundNormal);
         }
 
-        protected override bool CanSnapToGround(in HumanoidCharacter character, in ControlledMovementStatus status)
-        {
-            return true;
-        }
     }
 }

@@ -105,7 +105,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             {
                 float dot = Vector3.Dot(character.InputDirection.normalized, affectedVelocity.normalized);
 
-                if (EnableHalfTurn && dot < HalfTurnThreshold && currentSqrSpeed > .05f)
+                if (EnableHalfTurn && dot < HalfTurnThreshold && currentSqrSpeed > .1f)
                     phase = ControlledMovementPhase.DoingHalfTurn;
                 else if (currentSqrSpeed > MaxSpeed * MaxSpeed)
                     phase = ControlledMovementPhase.Decelerating;
@@ -117,10 +117,10 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             switch (phase)
             {
                 case ControlledMovementPhase.Stopping:
-                    newVelocity = Vector3.MoveTowards(affectedVelocity, Vector3.zero, StopStrength);
+                    newVelocity = Vector3.Slerp(affectedVelocity, Vector3.zero, StopStrength);
                     break;
                 case ControlledMovementPhase.DoingHalfTurn:
-                    newVelocity = Vector3.Lerp(affectedVelocity, Vector3.zero, HalfTurnStrength);
+                    newVelocity = Vector3.MoveTowards(affectedVelocity, -affectedVelocity * .2f, HalfTurnStrength);
                     break;
                 case ControlledMovementPhase.Accelerating or ControlledMovementPhase.Decelerating:
                     bool isAcceleration = phase == ControlledMovementPhase.Accelerating;
@@ -157,7 +157,6 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             return new MovementInfos()
             {
                 velocity = finalVelocity,
-                snapToGround = CanSnapToGround(in character, in status),
                 gravityMultiplier = GravityMultiplier(in character, in status),
             };
         }
@@ -166,6 +165,5 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             character.InputDirection;
 
         protected virtual float GravityMultiplier(in HumanoidCharacter character, in T status) => 1f;
-        protected virtual bool CanSnapToGround(in HumanoidCharacter character, in T status) => false;
     }
 }

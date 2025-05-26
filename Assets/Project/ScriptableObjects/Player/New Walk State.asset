@@ -70,5 +70,5 @@ MonoBehaviour:
     m_RotationOrder: 4
   <EnableHalfTurn>k__BackingField: 1
   <HalfTurnThreshold>k__BackingField: 0
-  <HalfTurnStrength>k__BackingField: 12
+  <HalfTurnStrength>k__BackingField: 0.6
   <StopStrength>k__BackingField: 0.6
