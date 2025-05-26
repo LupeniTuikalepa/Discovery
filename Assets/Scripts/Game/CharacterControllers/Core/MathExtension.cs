@@ -1,7 +1,6 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core
+namespace Discovery.Game.CharacterControllers
 {
     public static class MathExtension
     {

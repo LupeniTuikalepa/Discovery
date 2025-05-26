@@ -1,13 +1,11 @@
 ﻿using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core.Infos
+namespace Discovery.Game.CharacterControllers.Infos
 {
-    public struct SlideResult
+    public struct MovementResult
     {
         public Vector3 from;
         public Vector3 to;
-        public Vector3 inDelta;
-        public Vector3 outDelta;
 
         public int collisionCount;
         public SlideCollision[] collisions;

@@ -1,8 +1,8 @@
-﻿using Discovery.Game.Game.CharacterControllers.Humanoid;
+﻿using Discovery.Game.CharacterControllers.Humanoid;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Discovery.Game.Game.Player
+namespace Discovery.Game.Player
 {
     public class PlayerControls : MonoBehaviour, IHumanoidControls
     {

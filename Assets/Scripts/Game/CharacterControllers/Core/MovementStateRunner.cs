@@ -1,7 +1,7 @@
-﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
-using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
+﻿using Discovery.Game.CharacterControllers.Infos;
+using Discovery.Game.CharacterControllers.Interfaces;
 
-namespace Discovery.Game.Game.CharacterControllers.Core
+namespace Discovery.Game.CharacterControllers
 {
     internal sealed class MovementStateRunner<TCharacter, TStatus> : IMovementStateRunner
         where TCharacter : ICharacter

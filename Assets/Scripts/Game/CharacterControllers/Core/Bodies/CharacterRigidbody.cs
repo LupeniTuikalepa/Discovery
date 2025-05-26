@@ -1,7 +1,7 @@
-﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
+﻿using Discovery.Game.CharacterControllers.Infos;
 using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
+namespace Discovery.Game.CharacterControllers.Bodies
 {
     [RequireComponent(typeof(Rigidbody))]
     public class CharacterRigidbody : CharacterBody
@@ -23,32 +23,29 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
         private int maxDepenetrationSteps = 5;
 
 
-        private void Reset()
-        {
-            CollectDependencies();
-        }
 
-        private void OnValidate()
-        {
-            CollectDependencies();
-        }
-        private void Awake()
-        {
-            OnAwake();
-            CollectDependencies();
-        }
-
-        private void FixedUpdate()
+        protected override void FixedUpdate()
         {
             ComputeDepenetration();
+            base.FixedUpdate();
         }
 
 
-        protected virtual void OnAwake()
+        public override bool HasComponents() => capsuleCollider != null && rb != null && base.HasComponents();
+
+        protected override void CollectDependencies()
         {
+            base.CollectDependencies();
+            if(rb == null)
+                rb = GetComponent<Rigidbody>();
+
+            if (capsuleCollider == null)
+            {
+                if(!TryGetComponent(out capsuleCollider))
+                    capsuleCollider = GetComponentInChildren<CapsuleCollider>();
+            }
 
         }
-
         private void ComputeDepenetration()
         {
             Vector3 capsulePosition = capsuleCollider.transform.position;
@@ -68,6 +65,9 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
                 {
                     var other = results[j];
                     bool hasRigidbody = other.attachedRigidbody;
+                    if(other.attachedRigidbody == rb)
+                        continue;
+
                     Vector3 otherPosition = hasRigidbody ? other.attachedRigidbody.position : other.transform.position;
                     Quaternion otherRotation = hasRigidbody ? other.attachedRigidbody.rotation : other.transform.rotation;
 
@@ -85,56 +85,13 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
             }
         }
 
-
-        public virtual bool HasComponents() => capsuleCollider != null && rb != null;
-
-        protected virtual void CollectDependencies()
+        public override int ComputeMovement(Vector3 translation, out Vector3 finalTranslation, SlideCollision[] buffer)
         {
-            if(rb == null)
-                rb = GetComponent<Rigidbody>();
-
-            if (capsuleCollider == null)
-            {
-                if(!TryGetComponent(out capsuleCollider))
-                    capsuleCollider = GetComponentInChildren<CapsuleCollider>();
-            }
-
-        }
-
-        public override TeleportationResult Teleport(Vector3 point, bool apply = true)
-        {
-            if(apply)
-                rb.position = point;
-
-            return new TeleportationResult();
-        }
-
-        public override SlideResult SlideAndCollide(Vector3 delta, bool apply = true)
-        {
-            SlideCollision[] buffer = new SlideCollision[maxBounces];
             int count = 0;
 
-            Vector3 from = GetPosition();
-            Vector3 finalDelta = CollideAndSlide(delta, from, ref count, buffer);
+            finalTranslation = CollideAndSlide(translation, Position, ref count, buffer);
 
-            Vector3 to = from + finalDelta;
-            if (apply)
-            {
-                /*
-                rb.linearVelocity = finalDelta;
-                */
-                rb.MovePosition(to);
-            }
-
-            return new SlideResult()
-            {
-                from = from,
-                to = to,
-                inDelta = delta,
-                outDelta = finalDelta,
-                collisions = buffer,
-                collisionCount = count,
-            };
+            return count;
         }
 
         protected Vector3 CollideAndSlide(Vector3 delta, Vector3 from, ref int depth, SlideCollision[] collisions)
@@ -152,6 +109,7 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
 
                 Vector3 projectedDelta = Vector3.ProjectOnPlane(normDirection, hit.normal) * distanceAfterContact;
                 Vector3 newFrom = from + normDirection * distanceBeforeContact;
+                Debug.Log(projectedDelta);
                 Debug.DrawRay(newFrom, projectedDelta * 100);
                 Debug.DrawRay(from, projectedDelta * 100, Color.coral);
 
@@ -175,12 +133,23 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
 
         public override bool Cast(Vector3 from, Vector3 direction, out RaycastHit hit,  float maxDistance, int mask)
         {
-            return Physics.CapsuleCast(GetPoint1(from), GetPoint2(from), capsuleCollider.radius , direction, out hit, maxDistance, mask);
+            Vector3 p1 = GetPoint1(from);
+            Vector3 p2 = GetPoint2(from);
+
+            return Physics.CapsuleCast(p1, p2, capsuleCollider.radius , direction, out hit, maxDistance, mask);
         }
 
-        public override Vector3 GetPosition() => rb.position;
+        protected override void ApplyChanges()
+        {
+            rb.MovePosition(Position);
+            rb.MoveRotation(Rotation);
+        }
 
-        public override Quaternion GetRotation() => rb.rotation;
+        public override void UpdatePositionAndRotation()
+        {
+            Position = rb.position;
+            Rotation = rb.rotation;
+        }
 
 
         protected Vector3 GetCapsuleAxis() => capsuleCollider.direction switch
@@ -193,15 +162,24 @@ namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
 
 
 
-        protected Vector3 GetCenterPoint() => GetCenterPoint(capsuleCollider.transform.position);
+        protected Vector3 GetCapsulePosition()
+        {
+            Vector3 localOffset = rb.transform.InverseTransformPoint(capsuleCollider.transform.position);
+
+            Vector3 position = Position + capsuleCollider.center + rb.transform.TransformDirection(localOffset);
+
+            return position;
+        }
+
+        protected Vector3 GetCenterPoint() => GetCenterPoint(GetCapsulePosition());
         protected Vector3 GetCenterPoint(Vector3 pos) => pos + capsuleCollider.center;
-        protected Vector3 GetPoint1() => GetPoint1(capsuleCollider.transform.position);
+        protected Vector3 GetPoint1() => GetPoint1(GetCapsulePosition());
         protected Vector3 GetPoint1(Vector3 pos) => GetTop(pos) - GetCapsuleAxis() * capsuleCollider.radius;
-        protected Vector3 GetPoint2() => GetPoint2(capsuleCollider.transform.position);
+        protected Vector3 GetPoint2() => GetPoint2(GetCapsulePosition());
         protected Vector3 GetPoint2(Vector3 pos) => GetBottom(pos) + GetCapsuleAxis() * capsuleCollider.radius;
-        protected Vector3 GetTop() => GetTop(capsuleCollider.transform.position);
+        protected Vector3 GetTop() => GetTop(GetCapsulePosition());
         protected Vector3 GetTop(Vector3 pos) => GetCenterPoint(pos) + GetCapsuleAxis() * (capsuleCollider.height * .5f);
-        protected Vector3 GetBottom() => GetBottom(capsuleCollider.transform.position);
+        protected Vector3 GetBottom() => GetBottom(GetCapsulePosition());
         protected Vector3 GetBottom(Vector3 pos) => GetCenterPoint(pos) - GetCapsuleAxis() * (capsuleCollider.height * .5f);
 
     }

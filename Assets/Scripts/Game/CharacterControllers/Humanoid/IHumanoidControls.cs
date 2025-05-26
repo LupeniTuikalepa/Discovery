@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Humanoid
+namespace Discovery.Game.CharacterControllers.Humanoid
 {
     public interface IHumanoidControls
     {

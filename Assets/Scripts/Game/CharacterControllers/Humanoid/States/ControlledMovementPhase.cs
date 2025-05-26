@@ -1,4 +1,4 @@
-﻿namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
+﻿namespace Discovery.Game.CharacterControllers.Humanoid.States
 {
     public enum ControlledMovementPhase
     {

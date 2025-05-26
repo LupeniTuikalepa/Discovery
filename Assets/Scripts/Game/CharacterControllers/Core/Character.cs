@@ -1,21 +1,45 @@
 ﻿using System.Collections.Generic;
-using Discovery.Game.Game.CharacterControllers.Core.Bodies;
-using Discovery.Game.Game.CharacterControllers.Core.Infos;
-using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
+using Discovery.Game.CharacterControllers.Bodies;
+using Discovery.Game.CharacterControllers.Gravity;
+using Discovery.Game.CharacterControllers.Infos;
+using Discovery.Game.CharacterControllers.Interfaces;
+using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core
+namespace Discovery.Game.CharacterControllers
 {
-    [RequireComponent(typeof(CharacterBody))]
+    [RequireComponent(typeof(CharacterBody)), DefaultExecutionOrder(2)]
     public abstract class Character<TCharacter> : MonoBehaviour, ICharacter where TCharacter : Character<TCharacter>
     {
-        public Vector3 CurrentVelocity => StateVelocity + ReferentialVelocity;
+        public Vector3 CurrentVelocity => StateVelocity + ExternalVelocity;
 
         public Vector3 StateVelocity { get; private set; }
-        public Vector3 ReferentialVelocity { get; private set; }
+        public Vector3 ExternalVelocity { get; private set; }
 
+        [field: Header("Dependencies")]
         [field: SerializeField]
         public CharacterBody Body { get; private set; }
+
+        [field: Header("Ground")]
+
+        [field: Header("Gravity")]
+        [field: SerializeField]
+        public Priority<IGravityField> GravityField { get; private set; }
+
+        [field: SerializeField, Range(0, 10)]
+        public float GravityScale { get; private set; } = 1;
+
+        public Vector3 Gravity
+        {
+            get
+            {
+                IGravityField gravityFieldValue = GravityField.Value;
+                Vector3 baseGravity = gravityFieldValue?.GetGravityDirection(Body.Position) ?? Physics.gravity;
+
+                return baseGravity * GravityScale;
+            }
+        }
+
 
         private Dictionary<int, IMovementStateRunner> components;
         private int currentStateID;
@@ -49,12 +73,40 @@ namespace Discovery.Game.Game.CharacterControllers.Core
             currentStateID = nextState;
             float deltaTime = Time.fixedDeltaTime;
 
-            MovementInfos movementInfos = ComputeMovementForCurrentState(deltaTime);
-            SlideResult result = Body.SlideAndCollide(movementInfos.velocity, deltaTime);
-
-            StateVelocity = result.outDelta / deltaTime;
+            SolveMovement(deltaTime);
         }
 
+        private void SolveMovement(float deltaTime)
+        {
+            MovementInfos movementInfos = ComputeMovementForCurrentState(deltaTime);
+
+            Vector3 deltaVelocity = movementInfos.velocity * deltaTime;
+
+            MovementResult result = Body.AddMovement(deltaVelocity);
+            StateVelocity =  (result.to - result.from) / deltaTime;
+
+            Vector3 gravity = Gravity * movementInfos.gravityMultiplier;
+
+            Vector3 delta = Vector3.zero;
+            //Adding gravity as an external force
+            forcesBuffer.Add(gravity * deltaTime);
+
+            foreach (var force in forcesBuffer)
+            {
+                result = Body.AddMovement(force, deltaTime);
+                delta += (result.to - result.from) / deltaTime;
+            }
+
+            ExternalVelocity = delta;
+
+            forcesBuffer.Clear();
+        }
+
+
+        public void AddForce(Vector3 force)
+        {
+            forcesBuffer.Add(force);
+        }
 
         public bool TryGetCurrentState<TState, TComponent>(out TState state)
             where TState : MovementState<TCharacter, TComponent>

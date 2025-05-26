@@ -1,6 +1,6 @@
-﻿using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
+﻿using Discovery.Game.CharacterControllers.Interfaces;
 
-namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
+namespace Discovery.Game.CharacterControllers.Humanoid.States
 {
     public interface IControlledMovementStatus : IMovementStatus
     {

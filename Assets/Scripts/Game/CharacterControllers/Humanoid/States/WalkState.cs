@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
+namespace Discovery.Game.CharacterControllers.Humanoid.States
 {
     [CreateAssetMenu(menuName = "Character Controller/Walk")]
     public class WalkState : ControlledMovementState<ControlledMovementStatus>

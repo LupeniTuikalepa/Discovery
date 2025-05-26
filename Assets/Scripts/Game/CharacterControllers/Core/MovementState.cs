@@ -1,8 +1,8 @@
-﻿using Discovery.Game.Game.CharacterControllers.Core.Infos;
-using Discovery.Game.Game.CharacterControllers.Core.Interfaces;
+﻿using Discovery.Game.CharacterControllers.Infos;
+using Discovery.Game.CharacterControllers.Interfaces;
 using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core
+namespace Discovery.Game.CharacterControllers
 {
     public abstract class MovementState<TCharacter, TStatus> : ScriptableObject, IMovementState
         where TStatus : IMovementStatus

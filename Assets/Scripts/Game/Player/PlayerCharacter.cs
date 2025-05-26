@@ -1,20 +1,18 @@
-﻿using Discovery.Core;
-using Discovery.Game.Game.CharacterControllers.Humanoid;
-using Discovery.Game.Game.CharacterControllers.Humanoid.States;
+﻿using System;
+using Discovery.Core;
+using Discovery.Game.CharacterControllers.Humanoid;
+using Discovery.Game.CharacterControllers.Humanoid.States;
 using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
 
-namespace Discovery.Game.Game.Player
+namespace Discovery.Game.Player
 {
+    [SelectionBase]
     public class PlayerCharacter : HumanoidCharacter
     {
-        [SerializeField]
+        [SerializeField, Header("States")]
         private WalkState walkState;
 
-        protected override void OnAwake()
-        {
-            base.OnAwake();
-        }
 
         private void OnEnable()
         {
@@ -31,6 +29,10 @@ namespace Discovery.Game.Game.Player
         private void Start()
         {
             RegisterMovementState(walkState);
+        }
+
+        private void Update()
+        {
         }
     }
 }

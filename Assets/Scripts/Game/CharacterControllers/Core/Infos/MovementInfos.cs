@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core.Infos
+namespace Discovery.Game.CharacterControllers.Infos
 {
     public struct MovementInfos
     {

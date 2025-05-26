@@ -1,26 +1,93 @@
-using Discovery.Game.Game.CharacterControllers.Core.Infos;
+using System;
+using Discovery.Game.CharacterControllers.Infos;
 using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Core.Bodies
+namespace Discovery.Game.CharacterControllers.Bodies
 {
     /// <summary>
     /// Class responsible for applying movement to a characters.
     /// Handles collisions etc...
     /// </summary>
+    [DefaultExecutionOrder(5)]
     public abstract class CharacterBody : MonoBehaviour
     {
+        private static readonly SlideCollision[] Buffer = new SlideCollision[64];
+
+        public Vector3 Position { get; protected set; }
+        public Quaternion Rotation { get; protected set; }
+
+        public MovementResult AddMovement(Vector3 velocity, float deltaTime) => AddMovement(velocity * deltaTime);
+
+        public MovementResult AddMovement(Vector3 delta)
+        {
+            int count = ComputeMovement(delta, out Vector3 finalTranslation, Buffer);
+
+            Vector3 newPosition = Position + finalTranslation;
+            Vector3 lastPosition = Position;
+            Position = newPosition;
+
+            return new MovementResult()
+            {
+                from = lastPosition,
+                to = newPosition,
+                collisionCount = count,
+                collisions = Buffer,
+            };;
+        }
 
 
-        public SlideResult SlideAndCollide(Vector3 velocity, float deltaTime, bool apply = true) =>
-            SlideAndCollide(velocity * deltaTime, apply);
+        private void Reset()
+        {
+            CollectDependencies();
+        }
 
-        public abstract TeleportationResult Teleport(Vector3 point, bool apply = true);
-        public abstract SlideResult SlideAndCollide(Vector3 delta, bool apply = true);
+        private void Awake()
+        {
+            if(!HasComponents())
+                CollectDependencies();
+
+            UpdatePositionAndRotation();
+            OnAwake();
+        }
+
+
+        public virtual bool HasComponents() => true;
+
+        protected void OnValidate()
+        {
+            if (!Application.isPlaying)
+            {
+                CollectDependencies();
+            }
+        }
+
+        protected virtual void OnAwake()
+        {
+
+        }
+
+        protected virtual void CollectDependencies()
+        {
+
+        }
+
+        private void Update()
+        {
+            UpdatePositionAndRotation();
+        }
+
+        protected virtual void FixedUpdate()
+        {
+            ApplyChanges();
+        }
+
+        public abstract int ComputeMovement(Vector3 translation, out Vector3 finalTranslation, SlideCollision[] buffer);
 
         public abstract bool Cast(Vector3 from, Vector3 direction, out RaycastHit hit, float maxDistance, int mask);
-        public abstract Vector3 GetPosition();
-        public abstract Quaternion GetRotation();
 
-        public bool Cast(Vector3 direction, out RaycastHit hit, float maxDistance, int mask) => Cast(GetPosition(), direction, out hit, maxDistance, mask);
+        protected abstract void ApplyChanges();
+        public abstract void UpdatePositionAndRotation();
+
+        public bool Cast(Vector3 direction, out RaycastHit hit, float maxDistance, int mask) => Cast(Position, direction, out hit, maxDistance, mask);
     }
 }

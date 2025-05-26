@@ -1,4 +1,4 @@
-﻿namespace Discovery.Game.Game.CharacterControllers.Core.Interfaces
+﻿namespace Discovery.Game.CharacterControllers.Interfaces
 {
     public interface ICharacter
     {

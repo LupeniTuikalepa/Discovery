@@ -1,9 +1,8 @@
 ﻿using System;
-using Discovery.Game.Game.CharacterControllers.Core;
-using Discovery.Game.Game.CharacterControllers.Core.Infos;
+using Discovery.Game.CharacterControllers.Infos;
 using UnityEngine;
 
-namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
+namespace Discovery.Game.CharacterControllers.Humanoid.States
 {
     public abstract class ControlledMovementState<T> : MovementState<HumanoidCharacter, T>
         where T : struct, IControlledMovementStatus
@@ -118,7 +117,7 @@ namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
             switch (phase)
             {
                 case ControlledMovementPhase.Stopping:
-                    newVelocity = Vector3.MoveTowards(currentVelocity, Vector3.zero, StopStrength);
+                    newVelocity = Vector3.MoveTowards(affectedVelocity, Vector3.zero, StopStrength);
                     break;
                 case ControlledMovementPhase.DoingHalfTurn:
                     newVelocity = Vector3.Lerp(affectedVelocity, Vector3.zero, HalfTurnStrength);
@@ -146,15 +145,18 @@ namespace Discovery.Game.Game.CharacterControllers.Humanoid.States
                 status.CurrentPhase = phase;
                 status.PhaseFrames = 0;
             }
+
+            Vector3 finalVelocity = Axis switch
+            {
+                MovementAxis.Horizontal => newVelocity + verticalVelocity,
+                MovementAxis.Vertical => newVelocity + horizontalVelocity,
+                MovementAxis.Vertical | MovementAxis.Horizontal => newVelocity,
+                _ =>  Vector3.zero
+            };
+
             return new MovementInfos()
             {
-                velocity = Axis switch
-                {
-                    MovementAxis.Horizontal => newVelocity + verticalVelocity,
-                    MovementAxis.Vertical => newVelocity + horizontalVelocity,
-                    MovementAxis.Vertical | MovementAxis.Horizontal => newVelocity,
-                    _ =>  Vector3.zero
-                },
+                velocity = finalVelocity,
 
                 snapToGround = CanSnapToGround(in character, in status),
                 gravityMultiplier = GravityMultiplier(in character, in status),
