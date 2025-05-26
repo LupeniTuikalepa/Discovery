@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Discovery.Game.CharacterControllers.Bodies;
 using Discovery.Game.CharacterControllers.Gravity;
 using Discovery.Game.CharacterControllers.Infos;
 using Discovery.Game.CharacterControllers.Interfaces;
 using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Discovery.Game.CharacterControllers
 {
@@ -15,19 +17,30 @@ namespace Discovery.Game.CharacterControllers
 
         public Vector3 StateVelocity { get; private set; }
         public Vector3 ExternalVelocity { get; private set; }
+        public Vector3 GroundNormal { get; private set; }
+        public Vector3 GroundPoint { get; private set; }
+        public bool IsGrounded { get; private set; }
 
         [field: Header("Dependencies")]
         [field: SerializeField]
         public CharacterBody Body { get; private set; }
 
-        [field: Header("Ground")]
+        [Header("Ground")]
+        [SerializeField]
+        private float groundDetectionRange;
+        [SerializeField, Range(0, 1)]
+        private float minGroundSteepness = .5f;
+        [SerializeField]
+        private bool snapToGround;
+        [SerializeField]
+        private LayerMask groundLayerMast = Physics.AllLayers;
 
         [field: Header("Gravity")]
         [field: SerializeField]
         public Priority<IGravityField> GravityField { get; private set; }
 
-        [field: SerializeField, Range(0, 10)]
-        public float GravityScale { get; private set; } = 1;
+        [SerializeField, Range(0, 10)]
+        private float gravityScale = 1;
 
         public Vector3 Gravity
         {
@@ -36,7 +49,7 @@ namespace Discovery.Game.CharacterControllers
                 IGravityField gravityFieldValue = GravityField.Value;
                 Vector3 baseGravity = gravityFieldValue?.GetGravityDirection(Body.Position) ?? Physics.gravity;
 
-                return baseGravity * GravityScale;
+                return baseGravity * gravityScale;
             }
         }
 
@@ -59,6 +72,21 @@ namespace Discovery.Game.CharacterControllers
 
         private void FixedUpdate()
         {
+            float deltaTime = Time.fixedDeltaTime;
+            HandleStates();
+
+            var movementInfos = HandleMovement(deltaTime);
+            HandleGround();
+
+            if (snapToGround && IsGrounded && movementInfos.snapToGround)
+            {
+                Plane plane = new Plane(GroundNormal, GroundPoint + GroundNormal * Body.SkinWidth);
+                Body.Teleport(plane.ClosestPointOnPlane(Body.Position));
+            }
+        }
+
+        private void HandleStates()
+        {
             int nextState = GetNextStateID();
             if (nextState != currentStateID)
             {
@@ -71,21 +99,40 @@ namespace Discovery.Game.CharacterControllers
             }
 
             currentStateID = nextState;
-            float deltaTime = Time.fixedDeltaTime;
-
-            SolveMovement(deltaTime);
         }
 
-        private void SolveMovement(float deltaTime)
+        protected virtual void HandleGround()
+        {
+            Vector3 gravityDirection = Gravity.normalized;
+            if (Body.Cast(gravityDirection, out RaycastHit hit, groundDetectionRange, groundLayerMast))
+            {
+                float dot = Vector3.Dot(-gravityDirection, hit.normal);
+
+                if (dot >= minGroundSteepness)
+                {
+                    GroundPoint = hit.point;
+                    GroundNormal = hit.normal;
+                    IsGrounded = true;
+                    return;
+                }
+            }
+
+            GroundPoint = Body.Position;
+            GroundNormal = -gravityDirection;
+            IsGrounded = false;
+        }
+
+        private MovementInfos HandleMovement(float deltaTime)
         {
             MovementInfos movementInfos = ComputeMovementForCurrentState(deltaTime);
+            Vector3 gravity = Gravity * movementInfos.gravityMultiplier;
+
 
             Vector3 deltaVelocity = movementInfos.velocity * deltaTime;
 
             MovementResult result = Body.AddMovement(deltaVelocity);
             StateVelocity =  (result.to - result.from) / deltaTime;
 
-            Vector3 gravity = Gravity * movementInfos.gravityMultiplier;
 
             Vector3 delta = Vector3.zero;
             //Adding gravity as an external force
@@ -100,6 +147,8 @@ namespace Discovery.Game.CharacterControllers
             ExternalVelocity = delta;
 
             forcesBuffer.Clear();
+
+            return movementInfos;
         }
 
 
@@ -183,5 +232,11 @@ namespace Discovery.Game.CharacterControllers
         }
 
         protected abstract TCharacter GetCharacter();
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawRay(GroundPoint, GroundNormal);
+        }
     }
 }

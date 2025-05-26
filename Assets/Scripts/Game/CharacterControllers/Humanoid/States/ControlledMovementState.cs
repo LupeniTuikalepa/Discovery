@@ -157,7 +157,6 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             return new MovementInfos()
             {
                 velocity = finalVelocity,
-
                 snapToGround = CanSnapToGround(in character, in status),
                 gravityMultiplier = GravityMultiplier(in character, in status),
             };

@@ -13,22 +13,12 @@ namespace Discovery.Game.CharacterControllers.Bodies
         [SerializeField]
         private CapsuleCollider capsuleCollider;
 
-        [SerializeField, Range(.001f, .01f)]
-        private float skinWidth = .1f;
         [SerializeField]
         private LayerMask collisionLayerMask;
         [SerializeField, Range(1, 10)]
         private int maxBounces = 5;
         [SerializeField, Range(1, 10)]
         private int maxDepenetrationSteps = 5;
-
-
-
-        protected override void FixedUpdate()
-        {
-            ComputeDepenetration();
-            base.FixedUpdate();
-        }
 
 
         public override bool HasComponents() => capsuleCollider != null && rb != null && base.HasComponents();
@@ -48,15 +38,15 @@ namespace Discovery.Game.CharacterControllers.Bodies
         }
         private void ComputeDepenetration()
         {
-            Vector3 capsulePosition = capsuleCollider.transform.position;
-            Quaternion capsuleRotation = capsuleCollider.transform.rotation;
+            Vector3 capsulePosition = GetCapsulePosition();
+            Quaternion capsuleRotation = Rotation;
 
             for (int i = 0; i < maxDepenetrationSteps; i++)
             {
                 int count = Physics.OverlapCapsuleNonAlloc(
                     GetPoint1(),
                     GetPoint2(),
-                    capsuleCollider.radius + skinWidth,
+                    capsuleCollider.radius + SkinWidth,
                     results,
                     collisionLayerMask,
                     QueryTriggerInteraction.Ignore);
@@ -78,7 +68,7 @@ namespace Discovery.Game.CharacterControllers.Bodies
                             out Vector3 direction, out float distance))
                     {
                         Vector3 offset = direction * distance;
-                        rb.position += offset;
+                        Position += offset;
                         capsulePosition += offset;
                     }
                 }
@@ -104,12 +94,12 @@ namespace Discovery.Game.CharacterControllers.Bodies
 
             if (Cast(from, normDirection, out RaycastHit hit, distance, collisionLayerMask.value))
             {
-                float distanceBeforeContact = hit.distance - skinWidth;
+                float distanceBeforeContact = hit.distance - SkinWidth;
                 float distanceAfterContact = distance - distanceBeforeContact;
 
                 Vector3 projectedDelta = Vector3.ProjectOnPlane(normDirection, hit.normal) * distanceAfterContact;
                 Vector3 newFrom = from + normDirection * distanceBeforeContact;
-                Debug.Log(projectedDelta);
+
                 Debug.DrawRay(newFrom, projectedDelta * 100);
                 Debug.DrawRay(from, projectedDelta * 100, Color.coral);
 
@@ -141,6 +131,8 @@ namespace Discovery.Game.CharacterControllers.Bodies
 
         protected override void ApplyChanges()
         {
+            ComputeDepenetration();
+
             rb.MovePosition(Position);
             rb.MoveRotation(Rotation);
         }

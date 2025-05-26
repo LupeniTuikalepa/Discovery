@@ -16,6 +16,11 @@ namespace Discovery.Game.CharacterControllers.Bodies
         public Vector3 Position { get; protected set; }
         public Quaternion Rotation { get; protected set; }
 
+
+        [Header("Default")]
+        [field: SerializeField, Range(.001f, .01f)]
+        public float SkinWidth { get; private set; } = .01f;
+
         public MovementResult AddMovement(Vector3 velocity, float deltaTime) => AddMovement(velocity * deltaTime);
 
         public MovementResult AddMovement(Vector3 delta)
@@ -89,5 +94,10 @@ namespace Discovery.Game.CharacterControllers.Bodies
         public abstract void UpdatePositionAndRotation();
 
         public bool Cast(Vector3 direction, out RaycastHit hit, float maxDistance, int mask) => Cast(Position, direction, out hit, maxDistance, mask);
+
+        public virtual void Teleport(Vector3 newPos)
+        {
+            Position = newPos;
+        }
     }
 }
