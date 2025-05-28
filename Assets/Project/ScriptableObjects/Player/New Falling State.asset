@@ -9,16 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b685442076004eebbe43914d42d393a2, type: 3}
-  m_Name: New Walk State
+  m_Script: {fileID: 11500000, guid: 82d38a5afcf6450cb8c78bf062c27bf3, type: 3}
+  m_Name: New Falling State
   m_EditorClassIdentifier: 
   <MaxSpeed>k__BackingField: 4
-  <RotationStrength>k__BackingField: 400
-  <StopThreshold>k__BackingField: 0.05
+  <RotationStrength>k__BackingField: 100
+  <StopThreshold>k__BackingField: 0.001
   <AlignSpeedThreshold>k__BackingField: 0.2
   <Axis>k__BackingField: 1
   <AccelerationFrameCount>k__BackingField: 1
-  <AccelerationStrength>k__BackingField: 15
+  <AccelerationStrength>k__BackingField: 2
   <AccelerationCurve>k__BackingField:
     serializedVersion: 2
     m_Curve:
@@ -44,7 +44,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   <DecelerationFrameCount>k__BackingField: 1
-  <DecelerationStrength>k__BackingField: 500
+  <DecelerationStrength>k__BackingField: 7
   <DecelerationCurve>k__BackingField:
     serializedVersion: 2
     m_Curve:
@@ -53,7 +53,7 @@ MonoBehaviour:
       value: 1
       inSlope: 0
       outSlope: 0
-      tangentMode: 0
+      tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0
@@ -62,7 +62,7 @@ MonoBehaviour:
       value: 1
       inSlope: 0
       outSlope: 0
-      tangentMode: 0
+      tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0
@@ -71,6 +71,6 @@ MonoBehaviour:
     m_RotationOrder: 4
   <EnableHalfTurn>k__BackingField: 1
   <HalfTurnThreshold>k__BackingField: 0
-  <HalfTurnMinSpeed>k__BackingField: 0.5
+  <HalfTurnMinSpeed>k__BackingField: 0.35
   <HalfTurnStrength>k__BackingField: 0.6
-  <StopStrength>k__BackingField: 0.6
+  <StopStrength>k__BackingField: 0.0001

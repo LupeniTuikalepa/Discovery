@@ -23,6 +23,8 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
 
         [field: SerializeField, Min(0.000001f)]
         public float StopThreshold { get; private set; } = .001f;
+        [field: SerializeField, Range(0, 1)]
+        public float AlignSpeedThreshold { get; private set; } = .2f;
         [field: SerializeField]
         public MovementAxis Axis { get; private set; } = MovementAxis.Horizontal;
 
@@ -30,7 +32,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
         [field: SerializeField, Min(0)]
         public int AccelerationFrameCount { get; private set; } = 5;
         [field: SerializeField, Min(0)]
-        public int AccelerationStrength { get; private set; } = 5;
+        public float AccelerationStrength { get; private set; } = 5;
         [field: SerializeField]
         public AnimationCurve AccelerationCurve { get; private set; }
 
@@ -38,7 +40,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
         [field: SerializeField, Min(0)]
         public int DecelerationFrameCount { get; private set; } = 5;
         [field: SerializeField, Min(0)]
-        public int DecelerationStrength { get; private set; } = 5;
+        public float DecelerationStrength { get; private set; } = 5;
 
         [field: SerializeField]
         public AnimationCurve DecelerationCurve { get; private set; }
@@ -48,6 +50,8 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
         public bool EnableHalfTurn { get; private set; } = true;
         [field: SerializeField, Range(-1, 1)]
         public float HalfTurnThreshold { get; private set; } = 0;
+        [field: SerializeField, Range(0, 1)]
+        public float HalfTurnMinSpeed { get; private set; } = .35f;
         [field: SerializeField, Min(0)]
         public float HalfTurnStrength { get; private set; } = 20;
 
@@ -104,16 +108,16 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             else
             {
                 float dot = Vector3.Dot(character.InputDirection.normalized, affectedVelocity.normalized);
+                var halfTurnMinSpeed = HalfTurnMinSpeed * MaxSpeed;
 
-                if (EnableHalfTurn && dot < HalfTurnThreshold && currentSqrSpeed > .1f)
+                if (EnableHalfTurn && dot < HalfTurnThreshold &&
+                    currentSqrSpeed > (status.CurrentPhase == ControlledMovementPhase.DoingHalfTurn ? .5f : halfTurnMinSpeed * halfTurnMinSpeed))
                     phase = ControlledMovementPhase.DoingHalfTurn;
                 else if (currentSqrSpeed > MaxSpeed * MaxSpeed)
                     phase = ControlledMovementPhase.Decelerating;
                 else
                     phase = ControlledMovementPhase.Accelerating;
             }
-
-
             switch (phase)
             {
                 case ControlledMovementPhase.Stopping:
@@ -129,11 +133,18 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                     float frames = isAcceleration ? AccelerationFrameCount : DecelerationFrameCount;
 
                     float effectiveStrength = curve.Evaluate(status.PhaseFrames / frames) * strength;
-                    Vector3 targetVelocity =  GetInputDirection(in character, in status).normalized * MaxSpeed;
+                    Vector3 directionNormalized = GetInputDirection(in character, in status).normalized;
+                    Vector3 targetVelocity =  directionNormalized * MaxSpeed;
+
+                    if (currentSqrSpeed < AlignSpeedThreshold * MaxSpeed)
+                        affectedVelocity = directionNormalized * Mathf.Sqrt(currentSqrSpeed);
+
                     newVelocity = Vector3.RotateTowards(affectedVelocity,
                         targetVelocity,
                         RotationStrength * Mathf.Deg2Rad * deltaTime,
                         effectiveStrength * deltaTime);
+                    Debug.DrawRay(character.Body.Position, newVelocity, Color.red);
+                    Debug.DrawRay(character.Body.Position, targetVelocity, Color.green);
                     break;
             }
 
@@ -161,8 +172,21 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             };
         }
 
-        protected virtual Vector3 GetInputDirection(in HumanoidCharacter character, in T status) =>
-            character.InputDirection;
+        protected virtual Vector3 GetInputDirection(in HumanoidCharacter character, in T status)
+        {
+            switch (Axis)
+            {
+                case MovementAxis.Horizontal:
+                    return character.GetHorizontalVector(character.InputDirection);
+                case MovementAxis.Vertical:
+                    return character.GetVerticalVector(character.InputDirection);
+
+                case MovementAxis.Horizontal | MovementAxis.Vertical:
+                    return character.InputDirection;
+            }
+
+            return character.InputDirection;
+        }
 
         protected virtual float GravityMultiplier(in HumanoidCharacter character, in T status) => 1f;
     }

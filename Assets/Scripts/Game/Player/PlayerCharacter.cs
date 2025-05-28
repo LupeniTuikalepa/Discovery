@@ -4,6 +4,7 @@ using Discovery.Game.CharacterControllers.Humanoid;
 using Discovery.Game.CharacterControllers.Humanoid.States;
 using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Discovery.Game.Player
 {
@@ -12,6 +13,12 @@ namespace Discovery.Game.Player
     {
         [SerializeField, Header("States")]
         private WalkState walkState;
+        [SerializeField]
+        private SprintState sprintState;
+        [SerializeField]
+        private FallingState fallingState;
+        [SerializeField]
+        private JumpingState jumpingState;
 
 
         private void OnEnable()
@@ -29,10 +36,10 @@ namespace Discovery.Game.Player
         private void Start()
         {
             RegisterMovementState(walkState);
+            RegisterMovementState(sprintState);
+            RegisterMovementState(fallingState);
+            RegisterMovementState(jumpingState);
         }
 
-        private void Update()
-        {
-        }
     }
 }

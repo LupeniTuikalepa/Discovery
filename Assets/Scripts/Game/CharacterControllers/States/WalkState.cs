@@ -5,7 +5,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
     [CreateAssetMenu(menuName = "Character Controller/Walk")]
     public class WalkState : ControlledMovementState<ControlledMovementStatus>
     {
-        public override int GetStatePriority(in HumanoidCharacter character) => 1;
+        public override int GetStatePriority(in HumanoidCharacter character) => character.IsGrounded ? 1 : -1;
 
         protected override Vector3 GetInputDirection(in HumanoidCharacter character, in ControlledMovementStatus status)
         {

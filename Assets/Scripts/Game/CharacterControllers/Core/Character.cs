@@ -72,11 +72,18 @@ namespace Discovery.Game.CharacterControllers
 
         private void FixedUpdate()
         {
+            HandleRotation();
+
             float deltaTime = Time.fixedDeltaTime;
             HandleStates();
 
             MovementInfos movementInfos = HandleMovement(deltaTime);
             HandleGround();
+        }
+
+        protected virtual void HandleRotation()
+        {
+
         }
 
         private void HandleStates()
@@ -151,9 +158,7 @@ namespace Discovery.Game.CharacterControllers
             forcesBuffer.Add(force);
         }
 
-        public bool TryGetCurrentState<TState, TComponent>(out TState state)
-            where TState : MovementState<TCharacter, TComponent>
-            where TComponent : IMovementStatus
+        public bool TryGetCurrentState<TState>(out TState state)
         {
             if (components.TryGetValue(currentStateID, out IMovementStateRunner runner) &&
                 runner.State is TState movementState)
@@ -161,10 +166,46 @@ namespace Discovery.Game.CharacterControllers
                 state = movementState;
                 return true;
             }
-
-            state = null;
+            state = default;
             return false;
         }
+
+        public bool IsState<TState>() =>
+            components.TryGetValue(currentStateID, out IMovementStateRunner runner) &&
+            runner.State is TState;
+
+        public bool TryGetCurrentState<TState, TStatus>(out TState state, out TStatus status)
+            where TState : MovementState<TCharacter, TStatus>
+            where TStatus : IMovementStatus
+        {
+            if (components.TryGetValue(currentStateID, out IMovementStateRunner runner) &&
+                runner.State is TState movementState && runner.Status is TStatus movementStatus)
+            {
+                state = movementState;
+                status = movementStatus;
+                return true;
+            }
+
+            state = null;
+            status = default;
+            return false;
+        }
+
+        public bool TryGetCurrentState(out IMovementState state, out IMovementStatus status)
+        {
+            state = null;
+            status = null;
+            if (components.TryGetValue(currentStateID, out IMovementStateRunner runner))
+            {
+                state = runner.State;
+                status = runner.Status;
+                return true;
+            }
+
+            return false;
+        }
+
+        public IMovementState GetCurrentState() => components.TryGetValue(currentStateID, out IMovementStateRunner runner) ? runner.State : null;
 
         public bool RegisterMovementState<T>(MovementState<TCharacter, T> movementState) where T : IMovementStatus
         {
@@ -204,6 +245,8 @@ namespace Discovery.Game.CharacterControllers
             foreach ((var id, IMovementStateRunner movementStateRunner) in components)
             {
                 int newPriority = movementStateRunner.GetStatePriority();
+
+                //Debug.Log($"{newPriority} for {movementStateRunner.State.GetType().Name}");
                 if (newPriority > priority)
                 {
                     priority = newPriority;
@@ -226,10 +269,5 @@ namespace Discovery.Game.CharacterControllers
 
         protected abstract TCharacter GetCharacter();
 
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = IsGrounded ? Color.green : Color.red;
-            Gizmos.DrawRay(GroundPoint, GroundNormal);
-        }
     }
 }

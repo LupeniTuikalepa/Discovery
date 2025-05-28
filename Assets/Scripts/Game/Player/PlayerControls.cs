@@ -10,7 +10,7 @@ namespace Discovery.Game.Player
 
         public bool WantsToSprint => sprintInputAction.action.IsPressed();
 
-        public bool WantsToJump => jumpInputAction.action.WasPerformedThisFrame();
+        public bool WantsToJump => jumpInputAction.action.IsPressed();
 
         [SerializeField]
         private InputActionReference moveInputAction;
