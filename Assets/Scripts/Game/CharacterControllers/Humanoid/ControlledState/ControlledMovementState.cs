@@ -15,6 +15,14 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
             Vertical = 2,
         }
 
+        [field: Header("Animation")]
+        [field: SerializeField]
+        public string DefaultStateName { get; private set; }
+        [field: SerializeField]
+        public string StopStateName { get; private set; }
+        [field: SerializeField]
+        public string HalfTurnStateName { get; private set; }
+
         [field: Header("Base")]
         [field: SerializeField, Min(0)]
         public float MaxSpeed { get; private set; } = 5;
@@ -59,23 +67,40 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
         [field: SerializeField, Min(0)]
         public float StopStrength { get; private set; } = 20;
 
+        [SerializeField, HideInInspector]
+        private int stopStateNameHash;
+        [SerializeField, HideInInspector]
+        private int halfTurnStateNameHash;
+        [SerializeField, HideInInspector]
+        private int defaultStateNameHash;
+
+        private void OnValidate()
+        {
+            defaultStateNameHash = string.IsNullOrWhiteSpace(DefaultStateName) ? 0 : Animator.StringToHash(DefaultStateName);
+            stopStateNameHash = string.IsNullOrWhiteSpace(StopStateName) ? 0 : Animator.StringToHash(StopStateName);
+            halfTurnStateNameHash = string.IsNullOrWhiteSpace(HalfTurnStateName) ? 0 : Animator.StringToHash(HalfTurnStateName);
+        }
+
         public override T Initialize(in HumanoidCharacter character)
         {
             return new T()
             {
                 PhaseFrames = 0,
                 CurrentPhase = ControlledMovementPhase.Waiting,
+                LastAnimatorState = 0,
             };
         }
 
         public override void Enter(in HumanoidCharacter character, ref T status)
         {
+            status.LastAnimatorState = 0;
             status.PhaseFrames = 0;
             status.CurrentPhase = ControlledMovementPhase.Waiting;
         }
 
         public override void Exit(in HumanoidCharacter character, ref T status)
         {
+            status.LastAnimatorState = 0;
             status.PhaseFrames = 0;
             status.CurrentPhase = ControlledMovementPhase.Waiting;
         }
@@ -113,11 +138,16 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                 if (EnableHalfTurn && dot < HalfTurnThreshold &&
                     currentSqrSpeed > (status.CurrentPhase == ControlledMovementPhase.DoingHalfTurn ? .5f : halfTurnMinSpeed * halfTurnMinSpeed))
                     phase = ControlledMovementPhase.DoingHalfTurn;
+                else if(Mathf.Abs(currentSqrSpeed -  MaxSpeed * MaxSpeed) <= .05f)
+                    phase = ControlledMovementPhase.Moving;
                 else if (currentSqrSpeed > MaxSpeed * MaxSpeed)
                     phase = ControlledMovementPhase.Decelerating;
                 else
                     phase = ControlledMovementPhase.Accelerating;
             }
+
+            Vector3 directionNormalized = GetInputDirection(in character, in status).normalized;
+            Vector3 targetVelocity = directionNormalized * MaxSpeed;
             switch (phase)
             {
                 case ControlledMovementPhase.Stopping:
@@ -126,6 +156,13 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                 case ControlledMovementPhase.DoingHalfTurn:
                     newVelocity = Vector3.MoveTowards(affectedVelocity, -affectedVelocity * .2f, HalfTurnStrength);
                     break;
+                case ControlledMovementPhase.Moving:
+                    newVelocity = Vector3.RotateTowards(
+                        affectedVelocity.normalized * MaxSpeed,
+                        targetVelocity,
+                        RotationStrength * Mathf.Deg2Rad * deltaTime,
+                        0);
+                    break;
                 case ControlledMovementPhase.Accelerating or ControlledMovementPhase.Decelerating:
                     bool isAcceleration = phase == ControlledMovementPhase.Accelerating;
                     AnimationCurve curve = isAcceleration ? AccelerationCurve : DecelerationCurve;
@@ -133,8 +170,6 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                     float frames = isAcceleration ? AccelerationFrameCount : DecelerationFrameCount;
 
                     float effectiveStrength = curve.Evaluate(status.PhaseFrames / frames) * strength;
-                    Vector3 directionNormalized = GetInputDirection(in character, in status).normalized;
-                    Vector3 targetVelocity =  directionNormalized * MaxSpeed;
 
                     if (currentSqrSpeed < AlignSpeedThreshold * MaxSpeed)
                         affectedVelocity = directionNormalized * Mathf.Sqrt(currentSqrSpeed);
@@ -143,8 +178,6 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                         targetVelocity,
                         RotationStrength * Mathf.Deg2Rad * deltaTime,
                         effectiveStrength * deltaTime);
-                    Debug.DrawRay(character.Body.Position, newVelocity, Color.red);
-                    Debug.DrawRay(character.Body.Position, targetVelocity, Color.green);
                     break;
             }
 
@@ -153,9 +186,26 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                 status.PhaseFrames++;
             else
             {
+
+
                 status.CurrentPhase = phase;
                 status.PhaseFrames = 0;
             }
+
+            int hash = phase switch
+            {
+                ControlledMovementPhase.Stopping => stopStateNameHash,
+                ControlledMovementPhase.DoingHalfTurn => halfTurnStateNameHash,
+                ControlledMovementPhase.Accelerating or ControlledMovementPhase.Decelerating or ControlledMovementPhase.Moving => defaultStateNameHash,
+                _ => 0
+            };
+
+            if (hash != 0 && status.LastAnimatorState != hash)
+            {
+                var state = character.Animator.GetAnimatorStateInfo();
+                character.Animator.PlayState(hash, .15f, normalizedTimeOffset: state.normalizedTime);
+            }
+            status.LastAnimatorState = hash;
 
             Vector3 finalVelocity = Axis switch
             {

@@ -5,7 +5,6 @@ namespace Discovery.Game.CharacterControllers.Interfaces
     internal interface IMovementStateRunner
     {
         ICharacter Character { get; }
-
         IMovementStatus Status { get; }
         IMovementState State { get; }
 

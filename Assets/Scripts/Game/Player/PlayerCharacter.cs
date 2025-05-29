@@ -5,14 +5,18 @@ using Discovery.Game.CharacterControllers.Humanoid.States;
 using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace Discovery.Game.Player
 {
     [SelectionBase]
     public class PlayerCharacter : HumanoidCharacter
     {
-        [SerializeField, Header("States")]
-        private WalkState walkState;
+        [Header("States")]
+        [SerializeField]
+        private IdleState idleState;
+        [SerializeField]
+        private JogState jogState;
         [SerializeField]
         private SprintState sprintState;
         [SerializeField]
@@ -21,21 +25,24 @@ namespace Discovery.Game.Player
         private JumpingState jumpingState;
 
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
+            base.OnEnable();
             GameController.CursorLock.AddPriority(this, PriorityTags.Small, CursorLockMode.Locked);
             GameController.IsCursorVisible.AddPriority(this, PriorityTags.Small, false);
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
+            base.OnDisable();
             GameController.CursorLock.RemovePriority(this);
             GameController.IsCursorVisible.RemovePriority(this);
         }
 
         private void Start()
         {
-            RegisterMovementState(walkState);
+            RegisterMovementState(idleState);
+            RegisterMovementState(jogState);
             RegisterMovementState(sprintState);
             RegisterMovementState(fallingState);
             RegisterMovementState(jumpingState);

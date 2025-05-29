@@ -14,7 +14,6 @@ namespace Discovery.Game
             if (other.TryGetComponent(out CharacterBody characterBody))
             {
                 characterBody.Teleport(respawnPoint.position);
-                Debug.Break();
             }
         }
     }

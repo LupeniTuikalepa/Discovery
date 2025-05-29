@@ -2,6 +2,7 @@
 {
     public enum ControlledMovementPhase
     {
+        Moving,
         Accelerating,
         Decelerating,
         Stopping,

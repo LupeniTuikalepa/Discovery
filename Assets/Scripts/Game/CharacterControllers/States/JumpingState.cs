@@ -51,10 +51,10 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
                     return -1;
 
                 float dot = Vector3.Dot(character.CurrentVelocity, character.Gravity);
-                return dot > 0 ? 5 : 0;
+                return dot > 0 ? 10 : 0;
             }
 
-            return character.WantsToJump ? 5 : -1;
+            return character.WantsToJump ? 10 : -1;
         }
 
         public override MovementInfos GetStateVelocity(in float deltaTime, in HumanoidCharacter character, ref JumpingStatus status)
@@ -68,7 +68,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid.States
     public struct JumpingStatus : IControlledMovementStatus
     {
         public int PhaseFrames { get; set; }
-        public int JumpFrames { get; set; }
+        public int LastAnimatorState { get; set; }
         public ControlledMovementPhase CurrentPhase { get; set; }
     }
 }

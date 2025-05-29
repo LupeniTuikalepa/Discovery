@@ -25,36 +25,49 @@ namespace Discovery.Game
         [SerializeField]
         private Animator animator;
 
-
+        public Animator Animator => animator;
 
         private void LateUpdate()
         {
             animator.SetBool(IsGrounded, character.IsGrounded);
-            animator.SetBool(IsSprinting, character.IsState<SprintState>());
+            animator.SetBool(IsSprinting, character.IsInState<SprintState>());
 
-            Vector3 stateVelocity = transform.InverseTransformDirection(character.StateVelocity);
+            Vector3 stateVelocity = transform.InverseTransformDirection(character.StateVelocity) * .2f;
 
             var fade = 25f;
-            Fade(XStateSpeed, stateVelocity.x, fade);
-            Fade(YStateSpeed, stateVelocity.y, fade);
-            Fade(ZStateSpeed, stateVelocity.z, fade);
+            FadeAnimatorFloatValue(XStateSpeed, stateVelocity.x, fade);
+            FadeAnimatorFloatValue(YStateSpeed, stateVelocity.y, fade);
+            FadeAnimatorFloatValue(ZStateSpeed, stateVelocity.z, fade);
 
-            Fade(StateSpeed, stateVelocity.magnitude, fade * 50);
-            Fade(GroundSpeed, character.GetHorizontalVector(stateVelocity).magnitude, fade * 50);
+            FadeAnimatorFloatValue(StateSpeed, stateVelocity.magnitude, fade * 50);
+            FadeAnimatorFloatValue(GroundSpeed, character.GetHorizontalVector(stateVelocity).magnitude, fade * 50);
 
-            Vector3 currentVelocity = transform.InverseTransformDirection(character.CurrentVelocity);
-            Fade(XCurrentSpeed, currentVelocity.x, fade);
-            Fade(YCurrentSpeed, currentVelocity.y, fade);
-            Fade(ZCurrentSpeed, currentVelocity.z, fade);
-            Fade(CurrentSpeed, currentVelocity.magnitude, fade * 50);
+            Vector3 currentVelocity = transform.InverseTransformDirection(character.CurrentVelocity)* .2f;
+            FadeAnimatorFloatValue(XCurrentSpeed, currentVelocity.x, fade);
+            FadeAnimatorFloatValue(YCurrentSpeed, currentVelocity.y, fade);
+            FadeAnimatorFloatValue(ZCurrentSpeed, currentVelocity.z, fade);
+            FadeAnimatorFloatValue(CurrentSpeed, currentVelocity.magnitude, fade * 50);
 
         }
+
+        public AnimatorStateInfo GetAnimatorStateInfo(int layer = 0) => animator.IsInTransition(layer)
+            ? animator.GetNextAnimatorStateInfo(layer)
+            : animator.GetCurrentAnimatorStateInfo(layer);
+
+        public int GetCurrentStateHash(int layer = 0)
+        {
+            return GetAnimatorStateInfo(layer).shortNameHash;
+        }
+
+        public bool IsInState(int stateHash, int layer = 0) =>
+            animator.GetCurrentAnimatorStateInfo(layer).shortNameHash == stateHash ||
+            (animator.IsInTransition(layer) && animator.GetNextAnimatorStateInfo(layer).shortNameHash == stateHash);
 
         public void PlayState(int stateHash, float transition = 0, int layer = 0, float normalizedTimeOffset = 0) =>
             animator.CrossFade(stateHash, transition, layer, normalizedTimeOffset);
 
 
-        public void Fade(int hash, float target, float t)
+        public void FadeAnimatorFloatValue(int hash, float target, float t)
         {
             float current = animator.GetFloat(hash);
             float value = Mathf.MoveTowards(current, target, t * Time.deltaTime);

@@ -1,14 +1,17 @@
 ﻿using System;
 using Discovery.Game.CharacterControllers.Infos;
+using LTX.ChanneledProperties.Priorities;
 using UnityEngine;
 
 namespace Discovery.Game.CharacterControllers.Bodies
 {
-    [RequireComponent(typeof(Rigidbody)), DefaultExecutionOrder(5)]
+    [RequireComponent(typeof(Rigidbody))]
     public class CharacterBody : MonoBehaviour
     {
         private static readonly SlideCollision[] Buffer = new SlideCollision[64];
         private static readonly Collider[] Results = new Collider[32];
+
+        public event Action OnFixedUpdate;
 
         [SerializeField]
         private Rigidbody rb;
@@ -30,6 +33,9 @@ namespace Discovery.Game.CharacterControllers.Bodies
         [field: SerializeField, Range(.001f, .01f)]
         public float SkinWidth { get; private set; } = .01f;
 
+
+        public Priority<Vector2> CapsuleSize { get; private set; }
+
         private void Reset()
         {
             CollectDependencies();
@@ -40,6 +46,9 @@ namespace Discovery.Game.CharacterControllers.Bodies
             if(!HasComponents())
                 CollectDependencies();
 
+            Position = rb.position;
+            Rotation = rb.rotation;
+            CapsuleSize = new Priority<Vector2>(new Vector2(capsuleCollider.radius, capsuleCollider.height));
             UpdatePositionAndRotation();
         }
 
@@ -67,15 +76,17 @@ namespace Discovery.Game.CharacterControllers.Bodies
 
         }
 
-        private void Update()
-        {
-            UpdatePositionAndRotation();
-        }
 
         protected virtual void FixedUpdate()
         {
-            ApplyChanges();
+            OnFixedUpdate?.Invoke();
+
+            Vector2 size = CapsuleSize;
+            capsuleCollider.radius = size.x;
+            capsuleCollider.height = size.y;
+
             ComputeDepenetration();
+            ApplyChanges();
         }
 
         public MovementResult AddMovement(Vector3 velocity, float deltaTime)
@@ -100,14 +111,17 @@ namespace Discovery.Game.CharacterControllers.Bodies
 
         private void ComputeDepenetration()
         {
-            Vector3 capsulePosition = GetCapsulePosition();
+            Vector3 capsulePosition = Position;
             Quaternion capsuleRotation = Rotation;
 
             for (int i = 0; i < maxDepenetrationSteps; i++)
             {
+                Vector3 p1 = GetPoint1(capsulePosition);
+                Vector3 p2 = GetPoint2(capsulePosition);
+
                 int count = Physics.OverlapCapsuleNonAlloc(
-                    GetPoint1(),
-                    GetPoint2(),
+                    p1,
+                    p2,
                     capsuleCollider.radius + SkinWidth,
                     Results,
                     collisionLayerMask,
@@ -128,12 +142,13 @@ namespace Discovery.Game.CharacterControllers.Bodies
                             capsuleCollider, capsulePosition, capsuleRotation,
                             out Vector3 direction, out float distance))
                     {
-                        Vector3 offset = direction * distance;
-                        Position += offset;
-                        capsulePosition += offset;
+                        Vector3 offset = direction * (distance + SkinWidth);
+                        capsulePosition -= offset;
                     }
                 }
             }
+
+            Position = capsulePosition;
         }
 
         public int ComputeMovement(Vector3 translation, out Vector3 finalTranslation, SlideCollision[] buffer)
@@ -188,19 +203,26 @@ namespace Discovery.Game.CharacterControllers.Bodies
             Vector3 p1 = GetPoint1(from);
             Vector3 p2 = GetPoint2(from);
 
-            return Physics.CapsuleCast(p1, p2, capsuleCollider.radius , direction, out hit, maxDistance, mask);
+            return Physics.CapsuleCast(p1, p2, capsuleCollider.radius , direction, out hit, maxDistance + SkinWidth, mask, QueryTriggerInteraction.Ignore);
         }
 
         protected void ApplyChanges()
         {
             rb.MovePosition(Position);
+
+            if(float.IsNaN(Rotation.x) || float.IsNaN(Rotation.y) || float.IsNaN(Rotation.z) || float.IsNaN(Rotation.w))
+                Rotation = rb.rotation;
+
+            Rotation.Normalize();
             rb.MoveRotation(Rotation);
         }
 
         public void UpdatePositionAndRotation()
         {
+            /*
             Position = rb.position;
             Rotation = rb.rotation;
+            */
         }
 
 
@@ -216,9 +238,7 @@ namespace Discovery.Game.CharacterControllers.Bodies
 
         protected Vector3 GetCapsulePosition()
         {
-            Vector3 localOffset = rb.transform.InverseTransformPoint(capsuleCollider.transform.position);
-            Vector3 position = Position + capsuleCollider.center + rb.transform.TransformDirection(localOffset);
-            return position;
+            return Position + capsuleCollider.center;
         }
 
         protected Vector3 GetCenterPoint() => GetCenterPoint(GetCapsulePosition());
@@ -238,14 +258,15 @@ namespace Discovery.Game.CharacterControllers.Bodies
             Position = newPos;
         }
 
-        public virtual void Rotate(Quaternion rotation)
-        {
-            Rotation *= rotation;
-        }
-
         public virtual void SetRotation(Quaternion quaternion)
         {
             Rotation = quaternion;
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.DrawWireSphere(GetPoint1(transform.position), capsuleCollider.radius);
+            Gizmos.DrawWireSphere(GetPoint2(transform.position), capsuleCollider.radius);
         }
     }
 }

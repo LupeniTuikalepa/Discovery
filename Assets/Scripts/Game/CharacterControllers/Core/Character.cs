@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 
 namespace Discovery.Game.CharacterControllers
 {
-    [RequireComponent(typeof(CharacterBody)), DefaultExecutionOrder(2)]
+    [RequireComponent(typeof(CharacterBody))]
     public abstract class Character<TCharacter> : MonoBehaviour, ICharacter where TCharacter : Character<TCharacter>
     {
         public Vector3 CurrentVelocity => StateVelocity + ExternalVelocity;
@@ -68,9 +68,19 @@ namespace Discovery.Game.CharacterControllers
             OnAwake();
         }
 
+        protected virtual void OnEnable()
+        {
+            Body.OnFixedUpdate += OnBodyFixedUpdate;
+        }
+
+        protected virtual void OnDisable()
+        {
+            Body.OnFixedUpdate -= OnBodyFixedUpdate;
+        }
+
         protected virtual void OnAwake() { }
 
-        private void FixedUpdate()
+        private void OnBodyFixedUpdate()
         {
             HandleRotation();
 
@@ -170,7 +180,7 @@ namespace Discovery.Game.CharacterControllers
             return false;
         }
 
-        public bool IsState<TState>() =>
+        public bool IsInState<TState>() =>
             components.TryGetValue(currentStateID, out IMovementStateRunner runner) &&
             runner.State is TState;
 

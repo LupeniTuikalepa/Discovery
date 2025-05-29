@@ -37,7 +37,7 @@ namespace Discovery.Game.CharacterControllers.Humanoid
         protected override void HandleRotation()
         {
             Vector3 upwards = -Gravity.normalized;
-            Quaternion bodyRotation = Body.Rotation;
+            Quaternion bodyRotation = Body.Rotation.normalized;
 
             Vector3 direction = Orientation switch
             {
@@ -54,12 +54,10 @@ namespace Discovery.Game.CharacterControllers.Humanoid
             if(forward == upwards)
                 return;
 
-            Quaternion rot = Quaternion.LookRotation(forward, upwards);
+            Quaternion targetRotation = Quaternion.LookRotation(forward, upwards).normalized;
+            Quaternion smoothed = Quaternion.RotateTowards(bodyRotation, targetRotation, OrientationSpeed * Time.deltaTime);
 
-            Debug.DrawRay(transform.position + Vector3.up, upwards);
-            Debug.DrawRay(transform.position + Vector3.up, forward);
-            Quaternion smoothed = Quaternion.RotateTowards(bodyRotation, rot, OrientationSpeed * Time.deltaTime);
-            Body.Rotate(Quaternion.Inverse(bodyRotation) * smoothed);
+            Body.SetRotation(smoothed);
         }
 
         protected override HumanoidCharacter GetCharacter() => this;
